@@ -3277,6 +3277,13 @@ export function App() {
     localStorage.setItem("reasonix.themeStyle", themeStyle);
   }, [theme, themeStyle]);
 
+  // Sync --composer-max-width to .app (separate from inline style to avoid React override)
+  const composerRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!composerRef.current) composerRef.current = document.querySelector(".app");
+    composerRef.current?.style.setProperty("--composer-max-width", `${threadMaxWidth}px`);
+  }, [threadMaxWidth]);
+
   useEffect(() => {
     let raf = 0;
     let prevStage: ResponsiveStage | null = null;
