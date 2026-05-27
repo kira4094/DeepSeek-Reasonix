@@ -3,6 +3,17 @@
 All notable changes to Reasonix. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.53.1] — 2026-05-27
+
+**Install fix — `npx reasonix` no longer crashes on `EUNSUPPORTEDPROTOCOL`.**
+The 0.52.0 refactor that inlined Ink as a workspace package (#1947)
+left `"ink": "workspace:*"` in runtime `dependencies`. tsup already
+bundles ink into `dist/`, so the runtime never resolves it — but npm
+on consumer machines parses the declaration and rejects the
+unresolvable `workspace:` protocol. Removed from runtime deps; the
+bundled ink in `dist/` is the implementation. 0.53.0 is deprecated
+on npm.
+
 ## [0.53.0] — 2026-05-27
 
 **Force-summary respects the active model.** Context-guard and stuck-state
