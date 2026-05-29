@@ -3573,6 +3573,25 @@ function AppInner({
             () => undefined,
           );
         }
+        // Capture this turn to disk-based session memory.
+        if (session) {
+          try {
+            const { captureTurn } = await import("../../memory/mem-capture.js");
+            captureTurn({
+              text,
+              lastAssistantText,
+              turn: loop.stats.summary().turns,
+              sessionName: session,
+              cwd: process.cwd(),
+            });
+          } catch {
+            /* capture failures are non-fatal */
+          }
+        }
+        // Fire-and-forget session summary —doesn't await.
+        import("../../memory/mem-summarize.js")
+          .then((m) => m.summarizeSession({ cwd: process.cwd() }))
+          .catch(() => {});
 
         // Stop hooks —turn has ended (or aborted). Block decisions are
         // meaningless past this point so we treat every non-pass as a

@@ -10,6 +10,7 @@ import { handlers as initHandlers } from "./handlers/init.js";
 import { handlers as jobsHandlers } from "./handlers/jobs.js";
 import { handlers as languageHandlers } from "./handlers/language.js";
 import { handlers as mcpHandlers } from "./handlers/mcp.js";
+import { handlers as memHandlers } from "./handlers/mem.js";
 import { handlers as memoryHandlers } from "./handlers/memory.js";
 import { handlers as modelHandlers } from "./handlers/model.js";
 import { handlers as observabilityHandlers } from "./handlers/observability.js";
@@ -38,6 +39,7 @@ const HANDLERS: Record<string, SlashHandler> = {
   ...jobsHandlers,
   ...languageHandlers,
   ...mcpHandlers,
+  ...memHandlers,
   ...memoryHandlers,
   ...modelHandlers,
   ...observabilityHandlers,
