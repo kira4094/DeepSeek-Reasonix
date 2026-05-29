@@ -169,6 +169,7 @@ export function matchesTool(hook: ResolvedHook, toolName: string): boolean {
 export interface HookPayload {
   event: HookEvent;
   cwd: string;
+  sessionName?: string;
   toolName?: string;
   toolArgs?: unknown;
   toolResult?: string;

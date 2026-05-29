@@ -169,6 +169,11 @@ export const SLASH_COMMANDS: readonly SlashCommandSpec[] = [
     summary: "show / manage pinned memory (REASONIX.md + ~/.reasonix/memory)",
   },
   {
+    cmd: "mem",
+    group: "extend",
+    summary: "browse session memory (project-level conversation log)",
+  },
+  {
     cmd: "skill",
     group: "extend",
     argsHint:
