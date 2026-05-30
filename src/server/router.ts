@@ -14,6 +14,7 @@ import { handleHooks } from "./api/hooks.js";
 import { handleIndexConfig } from "./api/index-config.js";
 import { handleLoop } from "./api/loop.js";
 import { handleMcp } from "./api/mcp.js";
+import { handleMem } from "./api/mem.js";
 import { handleMemory } from "./api/memory.js";
 import { handleMessages } from "./api/messages.js";
 import { handleModal } from "./api/modal.js";
@@ -79,6 +80,8 @@ export async function handleApi(
         return await handleSettings(method, rest, body, ctx);
       case "hooks":
         return await handleHooks(method, rest, body, ctx);
+      case "mem":
+        return await handleMem(method, rest, body, ctx);
       case "memory":
         return await handleMemory(method, rest, body, ctx, query);
       case "skills":

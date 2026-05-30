@@ -1,8 +1,11 @@
 /** Dashboard HTTP server — defaults to 127.0.0.1 with an ephemeral per-boot token; mutations require the token in the header (CSRF). Host + token can be pinned for LAN / mobile access (#968). */
 
 import { randomBytes } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
 import { type IncomingMessage, type ServerResponse, createServer } from "node:http";
+import { homedir } from "node:os";
 import type { AddressInfo } from "node:net";
+import { join } from "node:path";
 import { handleEvents } from "./api/events.js";
 import { renderIndexHtml, serveAsset } from "./assets.js";
 import type { DashboardContext } from "./context.js";
@@ -117,6 +120,17 @@ export async function dispatch(
   const path = url.pathname;
   const method = (req.method ?? "GET").toUpperCase();
   const isMutation = method === "POST" || method === "DELETE" || method === "PUT";
+
+  // reasonix-mem Web UI — served from memory directory
+  if (path === "/mem" || path === "/mem/index.html") {
+    const memUiPath = join(homedir(), ".reasonix", "mem", "ui", "index.html");
+    if (existsSync(memUiPath)) {
+      const html = readFileSync(memUiPath, "utf8");
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(html);
+      return;
+    }
+  }
 
   // SPA routes — token-gate the HTML so a stranger can't even see the
   // shell without the token. This also means the user MUST come in
