@@ -1,5 +1,6 @@
 /**
  * Memory API — serves reasonix-mem session data from ~/.reasonix/mem/sessions/
+ * Directory layout: sessions/<hash>/<YYYYMMDD>/<sessionName>/chunk-*.jsonl
  */
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
@@ -24,28 +25,25 @@ export async function handleMem(
   const cwd = ctx.getCurrentCwd();
   const hash = createHash("sha1").update(resolve(cwd)).digest("hex").slice(0, 16);
 
-  // GET /api/mem/projects/:hash/sessions/:name
-  if (rest[0] === "projects" && rest[1] && rest[2] === "sessions" && rest[3]) {
-    const name = decodeURIComponent(rest.slice(3).join("/"));
-    return handleGetSession(rest[1], name);
-  }
-
-  // GET /api/mem/projects/:hash/sessions
-  if (rest[0] === "projects" && rest[1] && rest[2] === "sessions") {
-    return handleGetSessions(rest[1]);
-  }
-
   // GET /api/mem/projects
-  if (rest[0] === "projects") {
+  if (rest.length === 1 && rest[0] === "projects") {
     return handleGetProjects();
   }
 
-  // GET /api/mem/search?q=xxx&project=hash
-  if (rest[0] === "search") {
-    return handleSearch(hash);
+  // GET /api/mem/projects/:hash/sessions
+  if (rest.length === 3 && rest[0] === "projects" && rest[2] === "sessions") {
+    return handleGetSessions(rest[1]);
   }
 
-  // Default: return project hash
+  // GET /api/mem/projects/:hash/sessions/:dateRaw/:sessionDir?
+  // If rest[4] is undefined/empty, treat as old flat format (no session dir)
+  if (rest.length >= 4 && rest[0] === "projects" && rest[2] === "sessions") {
+    const dateRaw = decodeURIComponent(rest[3]);
+    const sessionDir = rest[4] ? decodeURIComponent(rest.slice(4).join("/")) : "";
+    return handleGetSession(rest[1], dateRaw, sessionDir);
+  }
+
+  // Default: return current project hash + cwd
   return { status: 200, body: { hash, cwd } };
 }
 
@@ -59,43 +57,52 @@ function handleGetProjects(): ApiResult {
     const hashDir = join(MEM_SESSIONS, hash);
     if (!statSync(hashDir).isDirectory()) continue;
 
-    // Derive a friendly project name from the first session's directory name
-    const dates = readdirSync(hashDir).filter(d => /^\d{8}$/.test(d)).sort().reverse();
-    const lastActive = dates[0] || "unknown";
-
     let projectName = hash;
-    if (dates.length > 0) {
-      // Read the first record from the most recent date's first chunk
-      const dateDir = join(hashDir, dates[0]);
-      const chunks = readdirSync(dateDir).filter(f => f.endsWith(".jsonl")).sort();
-      if (chunks.length > 0) {
-        try {
-          // Scan all chunks to find the first record with a sessionName
-          for (const chunk of chunks) {
-            const raw = readFileSync(join(dateDir, chunk), "utf8");
-            for (const line of raw.trim().split("\n")) {
-              if (!line.trim()) continue;
+    // 1. Check meta.json first (written by captureTurn with the cwd)
+    const metaPath = join(hashDir, "meta.json");
+    if (existsSync(metaPath)) {
+      try {
+        const meta = JSON.parse(readFileSync(metaPath, "utf8"));
+        if (meta.cwd) projectName = meta.cwd;
+      } catch { /* fallthrough */ }
+    }
+
+    // 2. Fallback: derive from session records
+    if (projectName === hash) {
+      const dates = readdirSync(hashDir).filter(d => /^\d{8}$/.test(d)).sort().reverse();
+      if (dates.length > 0) {
+        outer:
+        for (const date of dates) {
+          const dateDir = join(hashDir, date);
+          for (const sessionDir of readdirSync(dateDir)) {
+            const sDir = join(dateDir, sessionDir);
+            if (!statSync(sDir).isDirectory()) continue;
+            const chunks = readdirSync(sDir).filter(f => f.endsWith(".jsonl")).sort();
+            for (const ch of chunks) {
               try {
-                const rec = JSON.parse(line);
-                if (rec.sessionName) {
-                  projectName = rec.sessionName.replace(/__archive_\d+.*$/, "");
-                  break;
+                const raw = readFileSync(join(sDir, ch), "utf8");
+                const lines = raw.trim().split("\n").filter(l => l.trim());
+                for (const line of lines) {
+                  const rec = JSON.parse(line);
+                  if (rec.sessionName && !rec.sessionName.startsWith("default-")) {
+                    projectName = rec.sessionName.replace(/__archive_\d+.*$/, "");
+                    break outer;
+                  }
                 }
-              } catch { /* skip bad lines */ }
+              } catch { /* skip */ }
             }
-            if (projectName !== hash) break;
           }
-        } catch { /* fallthrough */ }
+        }
       }
     }
 
-    projects[hash] = { name: projectName, lastActive };
+    projects[hash] = { name: projectName };
   }
 
   return { status: 200, body: projects };
 }
 
-// ── Sessions ─────────────────────────────────────────────────
+// ── Sessions (list all sessions grouped by date) ─────────────
 
 function handleGetSessions(hash: string): ApiResult {
   const hashDir = join(MEM_SESSIONS, hash);
@@ -105,33 +112,36 @@ function handleGetSessions(hash: string): ApiResult {
 
   for (const date of readdirSync(hashDir).sort().reverse()) {
     const dateDir = join(hashDir, date);
-    if (!statSync(dateDir).isDirectory()) continue;
-
-    // Read chunks to get record count
-    const chunks = readdirSync(dateDir).filter(f => f.startsWith("chunk-") && f.endsWith(".jsonl")).sort();
-    let total = 0;
-    let mtimeMs = 0;
-    for (const chunk of chunks) {
-      const cp = join(dateDir, chunk);
-      try {
-        mtimeMs = Math.max(mtimeMs, statSync(cp).mtimeMs);
-        const raw = readFileSync(cp, "utf8");
-        total += raw.trim().split("\n").filter(Boolean).length;
-      } catch { /* skip */ }
-    }
+    if (!statSync(dateDir).isDirectory() || !/^\d{8}$/.test(date)) continue;
 
     const formattedDate = `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}`;
-    sessions.push({
-      name: formattedDate,
-      date: formattedDate,
-      dateRaw: date,
-      recordCount: total,
-      fileSize: 0,
-      hasSummary: false,
-      mtimeMs,
-      hash,
-      isDir: false,
-    });
+
+    for (const sessionDir of readdirSync(dateDir)) {
+      const sDir = join(dateDir, sessionDir);
+      if (!statSync(sDir).isDirectory()) continue;
+
+      let total = 0;
+      let mtimeMs = 0;
+      const chunks = readdirSync(sDir).filter(f => f.startsWith("chunk-") && f.endsWith(".jsonl")).sort();
+      for (const chunk of chunks) {
+        try {
+          const cp = join(sDir, chunk);
+          mtimeMs = Math.max(mtimeMs, statSync(cp).mtimeMs);
+          const raw = readFileSync(cp, "utf8");
+          total += raw.trim().split("\n").filter(Boolean).length;
+        } catch { /* skip */ }
+      }
+      if (total === 0) continue;
+      sessions.push({
+        name: sessionDir,
+        date: formattedDate,
+        dateRaw: date,
+        sessionDir,
+        recordCount: total,
+        mtimeMs,
+        hash,
+      });
+    }
   }
 
   return { status: 200, body: sessions };
@@ -139,29 +149,30 @@ function handleGetSessions(hash: string): ApiResult {
 
 // ── Session Detail ───────────────────────────────────────────
 
-function handleGetSession(hash: string, name: string): ApiResult {
-  // name is like "2026-05-30"
-  const dateRaw = name.replace(/-/g, "");
-  const dateDir = join(MEM_SESSIONS, hash, dateRaw);
+function handleGetSession(hash: string, dateRaw: string, sessionDir: string): ApiResult {
+  const dateDir = join(MEM_SESSIONS, hash, dateRaw, sessionDir);
   if (!existsSync(dateDir)) return { status: 404, body: { error: "Session not found" } };
 
-  const chunks = readdirSync(dateDir).filter(f => f.startsWith("chunk-") && f.endsWith(".jsonl")).sort();
+  const filePattern = readdirSync(dateDir).filter(f => f.startsWith("chunk-") && f.endsWith(".jsonl")).sort();
+  if (filePattern.length === 0) return { status: 404, body: { error: "No data files found" } };
   const records: Array<Record<string, unknown>> = [];
 
-  for (const chunk of chunks) {
-    const raw = readFileSync(join(dateDir, chunk), "utf8");
+  for (const chunk of filePattern) {
+    const filePath = join(dateDir, chunk);
+    if (!existsSync(filePath)) continue;
+    const raw = readFileSync(filePath, "utf8");
     for (const line of raw.split(/\r?\n/)) {
       const trimmed = line.trim();
       if (!trimmed) continue;
       try {
         const rec = JSON.parse(trimmed);
-        // Skip completely empty records (no text, no assistant, no tool calls)
+        // Skip completely empty records
         const hasText = rec.text?.length > 0;
         const hasAsst = rec.lastAssistantText?.length > 0;
         const hasTools = rec.toolCalls?.length > 0;
         if (!hasText && !hasAsst && !hasTools) continue;
 
-        // Backfill type for legacy records
+        // Backfill type
         if (!rec.type) {
           rec.type = hasTools ? "tool_call"
             : hasText ? "user_message"
@@ -172,7 +183,7 @@ function handleGetSession(hash: string, name: string): ApiResult {
     }
   }
 
-  // Reverse so newest records appear first (top of the UI)
+  // Reverse so newest records appear first
   const sorted = records.slice().reverse().map(r => ({
     ...r,
     content: r.text || "",
@@ -182,53 +193,13 @@ function handleGetSession(hash: string, name: string): ApiResult {
   return {
     status: 200,
     body: {
-      name,
-      date: name,
+      name: sessionDir,
+      date: dateRaw,
+      sessionDir,
       total: records.length,
       offset: 0,
       limit: records.length,
       records: sorted,
-      chunks,
-      currentChunk: null,
     },
   };
-}
-
-// ── Search ───────────────────────────────────────────────────
-
-function handleSearch(hash: string): ApiResult {
-  // Simple: search all chunks for matching text
-  // Full implementation would parse query params
-  const results: Array<Record<string, unknown>> = [];
-
-  if (!existsSync(MEM_SESSIONS)) return { status: 200, body: { results, query: "" } };
-
-  for (const h of readdirSync(MEM_SESSIONS)) {
-    if (hash && h !== hash) continue;
-    const hashDir = join(MEM_SESSIONS, h);
-    for (const date of readdirSync(hashDir)) {
-      const dateDir = join(hashDir, date);
-      for (const chunk of readdirSync(dateDir).filter(f => f.endsWith(".jsonl"))) {
-        const raw = readFileSync(join(dateDir, chunk), "utf8");
-        for (const line of raw.split("\n")) {
-          const trimmed = line.trim();
-          if (!trimmed) continue;
-          try {
-            const r = JSON.parse(trimmed);
-            results.push({
-              hash: h,
-              date,
-              sessionName: date,
-              record: r,
-              recordIndex: 0,
-              context: [r],
-            });
-          } catch { /* skip */ }
-        }
-      }
-    }
-  }
-
-  // Limit results
-  return { status: 200, body: { results: results.slice(0, 100), query: "" } };
 }

@@ -2,7 +2,7 @@
 
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -42,8 +42,21 @@ export interface CaptureTurnOpts {
 export function captureTurn(opts: CaptureTurnOpts): void {
 	const hash = createHash("sha1").update(opts.cwd).digest("hex").slice(0, 16);
 	const dateStr = todayCompact();
-	const dir = join(MEM_DIR, hash, dateStr);
+	// Session-level isolation: strip __archive_ suffix so renames don't fork
+	let sessionDir = (opts.sessionName || "default")
+		.replace(/[<>:"/\\|?*]/g, "_")
+		.replace(/__archive_\d+.*$/, "")
+		.slice(0, 80);
+	const dir = join(MEM_DIR, hash, dateStr, sessionDir);
 	mkdirSync(dir, { recursive: true });
+
+	// Store the workspace path so the Web UI can show a friendly project name
+	const metaPath = join(MEM_DIR, hash, "meta.json");
+	if (!existsSync(metaPath)) {
+		try {
+			writeFileSync(metaPath, JSON.stringify({ cwd: opts.cwd }), "utf8");
+		} catch { /* best-effort */ }
+	}
 
 	const chunkIndex = resolveChunkIndex(dir);
 	const filePath = join(
