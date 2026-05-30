@@ -56,7 +56,13 @@ export function captureTurn(opts: CaptureTurnOpts): void {
 	const hasAssistant = opts.lastAssistantText?.trim().length > 0;
 	if (!hasText && !hasAssistant) return;
 
+	const hasToolCalls = opts.toolCalls && opts.toolCalls.length > 0;
+	const captureType = hasToolCalls ? "tool_call"
+		: hasText ? "user_message"
+		: "assistant_message";
+
 	const entry: Record<string, unknown> = {
+		type: captureType,
 		t: opts.turn ?? 0,
 		ts: new Date().toISOString(),
 		text: opts.text || "",
@@ -64,7 +70,7 @@ export function captureTurn(opts: CaptureTurnOpts): void {
 		sessionName: opts.sessionName,
 	};
 
-	if (opts.toolCalls && opts.toolCalls.length > 0) {
+	if (hasToolCalls) {
 		entry.toolCalls = opts.toolCalls.map((tc) => ({
 			name: tc.name,
 			args: tc.args,

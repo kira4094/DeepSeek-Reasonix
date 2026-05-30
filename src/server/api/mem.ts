@@ -15,6 +15,7 @@ export async function handleMem(
   rest: string[],
   _body: string,
   ctx: DashboardContext,
+  _query: URLSearchParams = new URLSearchParams(),
 ): Promise<ApiResult> {
   if (method !== "GET") {
     return { status: 405, body: { error: "GET only" } };
@@ -23,9 +24,10 @@ export async function handleMem(
   const cwd = ctx.getCurrentCwd();
   const hash = createHash("sha1").update(resolve(cwd)).digest("hex").slice(0, 16);
 
-  // GET /api/mem/projects
-  if (rest[0] === "projects") {
-    return handleGetProjects();
+  // GET /api/mem/projects/:hash/sessions/:name
+  if (rest[0] === "projects" && rest[1] && rest[2] === "sessions" && rest[3]) {
+    const name = decodeURIComponent(rest.slice(3).join("/"));
+    return handleGetSession(rest[1], name);
   }
 
   // GET /api/mem/projects/:hash/sessions
@@ -33,10 +35,9 @@ export async function handleMem(
     return handleGetSessions(rest[1]);
   }
 
-  // GET /api/mem/projects/:hash/sessions/:name with optional ?chunk=N&limit=N
-  if (rest[0] === "projects" && rest[1] && rest[2] === "sessions" && rest[3]) {
-    const name = decodeURIComponent(rest.slice(3).join("/"));
-    return handleGetSession(rest[1], name);
+  // GET /api/mem/projects
+  if (rest[0] === "projects") {
+    return handleGetProjects();
   }
 
   // GET /api/mem/search?q=xxx&project=hash
@@ -57,10 +58,38 @@ function handleGetProjects(): ApiResult {
   for (const hash of readdirSync(MEM_SESSIONS)) {
     const hashDir = join(MEM_SESSIONS, hash);
     if (!statSync(hashDir).isDirectory()) continue;
-    // Find the most recent date to infer project activity
+
+    // Derive a friendly project name from the first session's directory name
     const dates = readdirSync(hashDir).filter(d => /^\d{8}$/.test(d)).sort().reverse();
     const lastActive = dates[0] || "unknown";
-    projects[hash] = { name: hash, lastActive };
+
+    let projectName = hash;
+    if (dates.length > 0) {
+      // Read the first record from the most recent date's first chunk
+      const dateDir = join(hashDir, dates[0]);
+      const chunks = readdirSync(dateDir).filter(f => f.endsWith(".jsonl")).sort();
+      if (chunks.length > 0) {
+        try {
+          // Scan all chunks to find the first record with a sessionName
+          for (const chunk of chunks) {
+            const raw = readFileSync(join(dateDir, chunk), "utf8");
+            for (const line of raw.trim().split("\n")) {
+              if (!line.trim()) continue;
+              try {
+                const rec = JSON.parse(line);
+                if (rec.sessionName) {
+                  projectName = rec.sessionName.replace(/__archive_\d+.*$/, "");
+                  break;
+                }
+              } catch { /* skip bad lines */ }
+            }
+            if (projectName !== hash) break;
+          }
+        } catch { /* fallthrough */ }
+      }
+    }
+
+    projects[hash] = { name: projectName, lastActive };
   }
 
   return { status: 200, body: projects };
@@ -124,9 +153,31 @@ function handleGetSession(hash: string, name: string): ApiResult {
     for (const line of raw.split(/\r?\n/)) {
       const trimmed = line.trim();
       if (!trimmed) continue;
-      try { records.push(JSON.parse(trimmed)); } catch { /* skip */ }
+      try {
+        const rec = JSON.parse(trimmed);
+        // Skip completely empty records (no text, no assistant, no tool calls)
+        const hasText = rec.text?.length > 0;
+        const hasAsst = rec.lastAssistantText?.length > 0;
+        const hasTools = rec.toolCalls?.length > 0;
+        if (!hasText && !hasAsst && !hasTools) continue;
+
+        // Backfill type for legacy records
+        if (!rec.type) {
+          rec.type = hasTools ? "tool_call"
+            : hasText ? "user_message"
+            : "assistant_message";
+        }
+        records.push(rec);
+      } catch { /* skip */ }
     }
   }
+
+  // Reverse so newest records appear first (top of the UI)
+  const sorted = records.slice().reverse().map(r => ({
+    ...r,
+    content: r.text || "",
+    toolResult: typeof r.toolResult === "string" ? r.toolResult.slice(0, 2000) : r.toolResult,
+  }));
 
   return {
     status: 200,
@@ -136,10 +187,7 @@ function handleGetSession(hash: string, name: string): ApiResult {
       total: records.length,
       offset: 0,
       limit: records.length,
-      records: records.map(r => ({
-        ...r,
-        toolResult: typeof r.toolResult === "string" ? r.toolResult.slice(0, 2000) : r.toolResult,
-      })),
+      records: sorted,
       chunks,
       currentChunk: null,
     },

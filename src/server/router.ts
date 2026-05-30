@@ -81,7 +81,7 @@ export async function handleApi(
       case "hooks":
         return await handleHooks(method, rest, body, ctx);
       case "mem":
-        return await handleMem(method, rest, body, ctx);
+        return await handleMem(method, rest, body, ctx, query);
       case "memory":
         return await handleMemory(method, rest, body, ctx, query);
       case "skills":

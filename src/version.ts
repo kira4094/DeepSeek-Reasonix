@@ -38,7 +38,9 @@ function readPackageVersion(): string {
   return "0.0.0-dev";
 }
 
-export const VERSION: string = readPackageVersion();
+const BASE_VERSION = readPackageVersion();
+/** Append a -mem suffix so the bottom‑right corner distinguishes our fork from stock. */
+export const VERSION: string = BASE_VERSION + "-mem";
 
 interface VersionCacheEntry {
   version: string;
