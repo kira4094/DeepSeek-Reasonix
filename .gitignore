@@ -1,5 +1,4 @@
 node_modules/
-# dist/  ← committed for GitHub-based npm install
 coverage/
 .stryker-tmp/
 .env

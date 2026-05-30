@@ -1,2 +1,0 @@
-# Explicitly allow dist since it's committed for GitHub-based install
-!dist/
