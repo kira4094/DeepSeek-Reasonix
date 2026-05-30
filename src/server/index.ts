@@ -180,6 +180,15 @@ export async function dispatch(
     return;
   }
 
+  if (path.startsWith("/api/mem/")) {
+    // No auth required for memory browser — it's local-only
+    const rawBody = await readBody(req);
+    const result = await handleApi(path.slice("/api/".length), method, rawBody, ctx, url.searchParams);
+    res.writeHead(result.status, { "content-type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify(result.body));
+    return;
+  }
+
   if (path.startsWith("/api/")) {
     const fail = checkAuth(req, expectedToken, isMutation);
     if (fail) {
@@ -233,6 +242,7 @@ export function startDashboardServer(
       const addr = server.address() as AddressInfo;
       const finalPort = addr.port;
       const url = `http://${host}:${finalPort}/?token=${token}`;
+      process.env.REASONIX_DASHBOARD_URL = url;
       if (!LOOPBACK_HOSTS.has(host)) {
         process.stderr.write(
           `▲ Dashboard bound to ${host}:${finalPort} (non-loopback). The URL token is the only auth — keep it secret.\n`,
