@@ -19,13 +19,11 @@
   "files": [
     "dist",
     "data/deepseek-tokenizer.json.gz",
-    "dashboard/index.html",
-    "dashboard/app.css",
-    "dashboard/dist",
     "patches",
     "scripts/postinstall.mjs",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "scripts/copy-tree-sitter-grammars.mjs"
   ],
   "workspaces": [
     "packages/*"
