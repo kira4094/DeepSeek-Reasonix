@@ -51,11 +51,16 @@ export function captureTurn(opts: CaptureTurnOpts): void {
 		`chunk-${String(chunkIndex).padStart(3, "0")}.jsonl`,
 	);
 
+	// Skip recording if there's nothing meaningful to store.
+	const hasText = opts.text?.trim().length > 0;
+	const hasAssistant = opts.lastAssistantText?.trim().length > 0;
+	if (!hasText && !hasAssistant) return;
+
 	const entry: Record<string, unknown> = {
-		t: opts.turn,
+		t: opts.turn ?? 0,
 		ts: new Date().toISOString(),
-		text: opts.text,
-		lastAssistantText: opts.lastAssistantText,
+		text: opts.text || "",
+		lastAssistantText: opts.lastAssistantText || "",
 		sessionName: opts.sessionName,
 	};
 
@@ -70,7 +75,8 @@ export function captureTurn(opts: CaptureTurnOpts): void {
 	appendFileSync(filePath, `${JSON.stringify(entry)}\n`, "utf8");
 
 	// Every CHECKPOINT_INTERVAL user messages, kick off a background summary.
-	if (opts.turn > 0 && opts.turn % CHECKPOINT_INTERVAL === 0) {
+	const turn = opts.turn ?? 0;
+	if (turn > 0 && turn % CHECKPOINT_INTERVAL === 0) {
 		spawnSummaryChild(opts.cwd);
 	}
 }
