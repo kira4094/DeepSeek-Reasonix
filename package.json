@@ -31,7 +31,6 @@
     "packages/*"
   ],
   "scripts": {
-    "postinstall": "node scripts/postinstall.mjs",
     "build": "tsup && node scripts/copy-tree-sitter-grammars.mjs",
     "dev": "tsx src/cli/index.ts",
     "chat": "tsx src/cli/index.ts chat",
