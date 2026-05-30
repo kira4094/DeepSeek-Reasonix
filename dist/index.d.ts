@@ -24,11 +24,9 @@ interface RetryInfo {
 }
 declare function fetchWithRetry(fetchFn: typeof fetch, url: string, init: RequestInit, opts?: RetryOptions): Promise<Response>;
 
-type PublicThemeName = "graphite" | "ember" | "aurora" | "sandstone" | "porcelain" | "linen" | "glacier" | "midnight";
-type LegacyThemeName = "dark" | "light" | "deep-blue" | "high-contrast";
-type ThemeName = PublicThemeName | LegacyThemeName;
+type ThemeName = "dark" | "light" | "midnight" | "deep-blue" | "high-contrast";
 
-type LanguageCode = "EN" | "zh-CN" | "de" | "ru" | "ja";
+type LanguageCode = "EN" | "zh-CN" | "de" | "ru";
 
 /** Shared exclude defaults + resolver — chunker, directory_tree, and dashboard read from here. */
 interface IndexUserConfig {
@@ -89,11 +87,9 @@ type ToolRateLimitOption = false | ToolRateLimitConfig;
 
 /** Single trust dial: review queues edits + gates shell; auto applies + gates shell; yolo skips both gates; plan blocks every non-readonly tool (write_file / edit_file / multi_edit / run_command) at dispatch. */
 type EditMode = "review" | "auto" | "yolo" | "plan";
-type DesktopCloseBehavior = "closeToTray" | "closeToQuit";
 type ReasoningEffort = "low" | "medium" | "high" | "max";
 type EngineeringLifecycleMode = "off" | "strict";
 type HistoryScrollMode = "auto" | "native" | "app";
-type DiffDisplay = "summary" | "full" | "none";
 type EmbeddingProvider = "ollama" | "openai-compat";
 interface OllamaEmbeddingUserConfig {
     baseUrl?: string;
@@ -116,15 +112,12 @@ interface McpServerConfig {
     command?: string;
     args?: string[];
     env?: Record<string, string>;
-    cwd?: string;
     transport?: "stdio" | "sse" | "streamable-http";
     /** Claude `.mcp.json` alias for `transport`; `"http"` is treated as `"streamable-http"`. */
     type?: "stdio" | "sse" | "streamable-http" | "http";
     url?: string;
     headers?: Record<string, string>;
     disabled?: boolean;
-    /** Per-request timeout in ms for this MCP server. Overrides the 60s default. (#2023) */
-    requestTimeoutMs?: number;
 }
 interface QQBotConfig {
     appId?: string;
@@ -132,20 +125,6 @@ interface QQBotConfig {
     sandbox?: boolean;
     enabled?: boolean;
     ownerOpenId?: string;
-    allowlist?: string[];
-}
-interface TelegramBotConfig {
-    botToken?: string;
-    enabled?: boolean;
-    ownerUserId?: string;
-    allowlist?: string[];
-}
-interface WeixinBotConfig {
-    token?: string;
-    accountId?: string;
-    baseUrl?: string;
-    enabled?: boolean;
-    ownerUserId?: string;
     allowlist?: string[];
 }
 interface PricingOverride {
@@ -179,16 +158,12 @@ interface ReasonixConfig {
     /** When false, skip the boot splash animation and show the main UI immediately. Default true. */
     banner?: boolean;
     reasoningEffort?: ReasoningEffort;
-    /** Per-turn output token cap sent as `max_tokens` in the API request (#2196). Null = no cap. */
-    maxOutputTokens?: number | null;
     /** Default workspace root for the desktop client. CLI uses cwd. */
     workspaceDir?: string;
     /** Last N workspace paths the desktop client has opened, most recent first. */
     recentWorkspaces?: string[];
     /** Desktop only — open tabs in tab order, each with its workspace dir, loaded session and focus, persisted so restart restores every tab and its conversation (issues #933, #1244). Empty/absent → boot with a single default tab. */
     desktopOpenTabs?: DesktopOpenTab[];
-    /** Desktop only — window close behavior. "closeToTray" hides the window and keeps sessions running; "closeToQuit" exits Reasonix. Default closeToQuit. */
-    desktopCloseBehavior?: DesktopCloseBehavior;
     /** Desktop only — `openWith` value for clicking file links. Empty/undefined = OS default app. Examples: "code", "cursor", "C:\\path\\to\\editor.exe". */
     editor?: string;
     theme?: ThemeName | "auto";
@@ -201,19 +176,14 @@ interface ReasonixConfig {
     /** Canonical MCP server configuration — merges with and overrides legacy `mcp`/`mcpEnv`/`mcpDisabled`. */
     mcpServers?: Record<string, McpServerConfig>;
     session?: string | null;
-    /** When false, each `reasonix code` / `reasonix chat` launch starts a fresh session instead
-     *  of resuming the last one (#2238). Default true preserves existing behavior. */
-    autoResumeSession?: boolean;
     setupCompleted?: boolean;
     search?: boolean;
-    /** Web search engine backend: "bing" (default, scrapes cn.bing.com), "bing-intl" (www.bing.com, indexes international sites), "searxng" (self-hosted SearXNG), "metaso" (Metaso API), "baidu" (Baidu AI Search API), "tavily" (LLM-friendly API, free tier), "perplexity" (Perplexity AI), "exa" (Exa API), "brave" (Brave Search API), or "ollama" (Ollama cloud web search). */
-    webSearchEngine?: "bing" | "bing-intl" | "searxng" | "metaso" | "baidu" | "tavily" | "perplexity" | "exa" | "brave" | "ollama";
+    /** Web search engine backend: "bing" (default, scrapes cn.bing.com), "searxng" (self-hosted SearXNG), "metaso" (Metaso API), "tavily" (LLM-friendly API, free tier), "perplexity" (Perplexity AI), "exa" (Exa API), "brave" (Brave Search API), or "ollama" (Ollama cloud web search). */
+    webSearchEngine?: "bing" | "searxng" | "metaso" | "tavily" | "perplexity" | "exa" | "brave" | "ollama";
     /** Base URL for SearXNG instance (default http://localhost:8080). */
     webSearchEndpoint?: string;
     /** Metaso API key. Falls back to METASO_API_KEY env var. */
     metasoApiKey?: string;
-    /** Baidu AI Search API key. Falls back to BAIDU_API_KEY or QIANFAN_API_KEY env var. */
-    baiduApiKey?: string;
     /** Tavily API key. Falls back to TAVILY_API_KEY env var. No baked-in default — free tier is 1000/mo per account, sharing would burn out. */
     tavilyApiKey?: string;
     /** Perplexity API key. Falls back to PERPLEXITY_API_KEY env var. Get one at https://perplexity.ai/settings/api */
@@ -230,8 +200,6 @@ interface ReasonixConfig {
     mouseWheelRows?: number;
     /** Chat-history scrolling: "native" leaves terminal scrollback in charge; "app" captures wheel/PgUp/PgDn/End inside the TUI; "auto" enables app mode for terminals with known jumpy native scrollback. */
     historyScrollMode?: HistoryScrollMode;
-    /** Diff display mode for edit_file / write_file / multi_edit results in CLI. */
-    diffDisplay?: DiffDisplay;
     dashboard?: {
         /** Whether the embedded dashboard auto-starts on launch. Default true. Set false to disable without passing --no-dashboard each time. */
         enabled?: boolean;
@@ -261,9 +229,6 @@ interface ReasonixConfig {
     /** Preferred display currency for costs (e.g. "USD" or "CNY"). When unset, falls back
      *  to the wallet currency if available, then defaults to CNY. */
     costCurrency?: string;
-    /** Maximum tool-call iterations per turn. Prevents runaway loops from consuming
-     *  unlimited API budget. Default 50. Env `REASONIX_MAX_ITER` overrides. */
-    maxIterPerTurn?: number;
     projects?: {
         [absoluteRootDir: string]: {
             shellAllowed?: string[];
@@ -273,9 +238,6 @@ interface ReasonixConfig {
             pathAllowed?: string[];
         };
     };
-    /** Global shell allowlist — command prefixes auto-approved across ALL projects (#2059).
-     *  Merged (union) with the per-project `projects[<root>].shellAllowed` at check time. */
-    shellAllowedGlobal?: string[];
     /** Issue #259 — user-configurable sensitive-path prefixes and filename patterns.
      *  Commands touching these paths are demoted to the confirm gate even when allowlisted. */
     sensitivePaths?: {
@@ -293,8 +255,6 @@ interface ReasonixConfig {
     subagentModels?: Record<string, "flash" | "pro">;
     /** Enable the `java_source` tool for finding and decompiling Java class source. Default off. */
     javaSource?: boolean;
-    /** Per-model context-window override (tokens). Keys are model ids; values are prompt-side token caps. */
-    contextTokens?: Record<string, number>;
     /** User-declared extensions to the built-in memory types (#709). Unknown types round-trip even without a declaration; declaring one lets you attach a default priority + lifecycle. */
     memory?: {
         customTypes?: CustomMemoryTypeConfig[];
@@ -314,8 +274,6 @@ interface ReasonixConfig {
     };
     /** QQ Bot configuration */
     qq?: QQBotConfig;
-    telegram?: TelegramBotConfig;
-    weixin?: WeixinBotConfig;
 }
 interface CustomMemoryTypeConfig {
     name: string;
@@ -324,7 +282,6 @@ interface CustomMemoryTypeConfig {
     expires?: "project_end";
 }
 declare function loadMetasoApiKey(path?: string): string | undefined;
-declare function loadBaiduApiKey(path?: string): string | undefined;
 /** Perplexity API key — env > config > undefined. Get one at https://perplexity.ai/settings/api */
 declare function loadPerplexityApiKey(path?: string): string | undefined;
 /** Exa API key — env > config > undefined. Free 1000/mo signup at https://exa.ai */
@@ -403,7 +360,7 @@ interface RawUsage {
 interface ChatRequestOptions {
     model: string;
     messages: ChatMessage[];
-    tools?: readonly ToolSpec[];
+    tools?: ToolSpec[];
     temperature?: number;
     maxTokens?: number;
     stream?: boolean;
@@ -697,7 +654,6 @@ interface HookPayload {
     toolResult?: string;
     prompt?: string;
     lastAssistantText?: string;
-    last_assistant_message?: string;
     turn?: number;
 }
 /** Test seam — same shape as Node's spawn but returns a Promise of the raw outcome bits. */
@@ -860,31 +816,6 @@ declare class ToolCallRepair {
     };
 }
 
-type CacheMissReason = "no-miss" | "cold-start" | "system-prompt-changed" | "tool-list-changed" | "tool-schema-or-order-changed" | "mcp-tool-hot-add" | "memory-or-skill-changed" | "unknown";
-interface PrefixDiagnosticHashes {
-    prefixHash: string;
-    systemHash: string;
-    toolSpecsHash: string;
-    fewShotsHash: string;
-    toolCount: number;
-    toolNames: string[];
-}
-interface CacheDiagnosticEntry extends PrefixDiagnosticHashes {
-    ts: number;
-    turn: number;
-    model: string;
-    inputTokens: number;
-    cachedTokens: number;
-    cacheMissTokens: number;
-    cacheHitRate: number;
-    estimatedCostUsd: number;
-    savedCostUsd: number;
-    missReason: CacheMissReason;
-    missReasonDetail: string;
-    /** DeepSeek reports token counts only; miss reason is inferred locally from stable prefix evidence. */
-    inferred: true;
-}
-
 declare function costUsd(model: string, usage: Usage, path?: string): number;
 /** Input-side cost only (prompt, cache hit + miss). Used for the panel breakdown. */
 declare function inputCostUsd(model: string, usage: Usage, path?: string): number;
@@ -924,10 +855,6 @@ declare class SessionStats {
     private _carryoverCompletion;
     /** Last turn's promptTokens before exit — surfaced via summary() until the next live turn lands. */
     private _carryoverLastPromptTokens;
-    /** Per-turn cache diagnostics stored as each turn completes, so the live
-     *  /cache-miss-report can replay accurate prefix hashes per historical turn
-     *  rather than computing them all from the current prefix. */
-    private _cacheDiagnostics;
     /** Seed totals from a resumed session's persisted meta — only call once at construction. */
     seedCarryover(opts: {
         totalCostUsd?: number;
@@ -945,13 +872,6 @@ declare class SessionStats {
     get cumulativeCompletionTokens(): number;
     reset(): void;
     record(turn: number, model: string, usage: Usage): TurnStats;
-    /** Fold external usage (e.g. subagent child-loop) into session totals without creating a turn entry. (#2008) */
-    recordExternal(model: string, usage: Usage): void;
-    /** Store a cache diagnostic entry per turn so the live /cache-miss-report
-     *  replays the prefix hashes that were actually in effect at turn time. */
-    addCacheDiagnostic(entry: CacheDiagnosticEntry): void;
-    /** Per-turn cache diagnostics stored in-memory for the current process. */
-    get cacheDiagnostics(): readonly CacheDiagnosticEntry[];
     /** Drop oldest turns beyond MAX_TURNS, folding their costs into carryover so
      *  session totals remain accurate even after trimming. */
     private trimOldTurns;
@@ -995,7 +915,6 @@ interface LoopEvent {
     /** Stable id for tool_start / tool pairs — also the inflight-set key. UI uses this as the card id so it can derive `running` from `loop.inflight.has(callId)` instead of trusting end-event delivery. */
     callId?: string;
     stats?: TurnStats;
-    cacheDiagnostic?: CacheDiagnosticEntry;
     repair?: RepairReport;
     error?: string;
     errorDetail?: {
@@ -1023,64 +942,29 @@ declare class ImmutablePrefix {
     readonly fewShots: readonly ChatMessage[];
     /** Invalidated by addTool / removeTool / replaceSystem; bypassing any of those leaves cache stale → fingerprint diverges from sent prefix. */
     private _fingerprintCache;
-    /** Frozen tool-spec snapshot — avoids structuredClone per iteration. Invalidated by addTool/removeTool. */
-    private _frozenToolsCache;
-    /** Diagnostic hash cache keyed by immutable tool snapshots. Invalidated with the prefix caches. */
-    private _diagnosticHashesCache;
     constructor(opts: ImmutablePrefixOptions);
     /** Replaces the system prompt; returns true iff the string actually changed. Caller must accept a cache miss on the next turn. */
     replaceSystem(s: string): boolean;
     get toolSpecs(): readonly ToolSpec[];
     toMessages(): ChatMessage[];
-    /** Frozen shallow copy of the current tool list. Callers must treat the
-     *  returned array and its elements as read-only — mutating them corrupts
-     *  the cache shared across turns. */
-    tools(): readonly ToolSpec[];
+    tools(): ToolSpec[];
     addTool(spec: ToolSpec): boolean;
     /** Mirror of addTool for MCP hot-unbridge. Same cache-miss cost — prefix changes shape. */
     removeTool(name: string): boolean;
     get fingerprint(): string;
-    diagnosticHashes(toolSpecs?: readonly ToolSpec[]): PrefixDiagnosticHashes;
-    private invalidatePrefixCaches;
-    private computeDiagnosticHashes;
     /** Dev/test only — throws on cache drift, which always means a non-`addTool` mutation slipped in. */
     verifyFingerprint(): string;
     private computeFingerprint;
 }
 declare class AppendOnlyLog {
     private _entries;
-    private _windowSize;
-    private _sessionPath;
-    private _totalLength;
-    /** Cached full-history result — avoids redundant sync disk I/O when
-     *  buildMessages() is called 2-3x per loop iteration. Invalidated by
-     *  append / compactInPlace / initWindow. */
-    private _fullHistoryCache;
-    private _version;
-    constructor(opts?: {
-        windowSize?: number;
-        sessionPath?: string;
-    });
-    initWindow(messages: ChatMessage[]): void;
     append(message: ChatMessage): void;
     extend(messages: ChatMessage[]): void;
     /** The one append-only-breaking path — reserved for `/compact` + recovery. Use `append()` otherwise. */
     compactInPlace(replacement: ChatMessage[]): void;
-    getEntry(index: number): ChatMessage | undefined;
-    /** Window only — no disk I/O. */
-    toMessages(): ChatMessage[];
-    /** Full history — reads from disk when window doesn't cover everything. */
-    toFullHistory(): ChatMessage[];
     get entries(): readonly ChatMessage[];
-    /** Number of messages currently in the memory window. */
+    toMessages(): ChatMessage[];
     get length(): number;
-    /** Total messages logically in the log (window + disk). */
-    get totalLength(): number;
-    get windowSize(): number;
-    get sessionPath(): string | null;
-    /** Monotonic version counter — bumped on every mutation. Consumers store
-     *  their own snapshot and compare to detect staleness (non-destructive). */
-    get version(): number;
 }
 declare class VolatileScratch {
     reasoning: string | null;
@@ -1199,12 +1083,8 @@ interface CacheFirstLoopOptions {
     model?: string;
     stream?: boolean;
     reasoningEffort?: ReasoningEffort;
-    /** Per-turn output token cap passed as `max_tokens`. Undefined = no cap (server default). */
-    maxOutputTokens?: number;
     /** Soft USD cap — warns at 80%, refuses next turn at 100%. Opt-in (default no cap). */
     budgetUsd?: number;
-    /** Maximum tool-call iterations per turn. Overrides config/env. Default 50. */
-    maxIterPerTurn?: number;
     session?: string;
     /** PreToolUse + PostToolUse only — UserPromptSubmit / Stop live at the App boundary. */
     hooks?: ResolvedHook[];
@@ -1220,8 +1100,6 @@ interface ReconfigurableOptions {
     stream?: boolean;
     /** V4 thinking mode only; deepseek-chat ignores. */
     reasoningEffort?: ReasoningEffort;
-    /** Per-turn output token cap. Pass null to clear. */
-    maxOutputTokens?: number | null;
 }
 interface LoopAbortOptions {
     /** Explicit user interrupts can discard the unfinished turn so the next prompt starts clean. */
@@ -1235,19 +1113,12 @@ declare class CacheFirstLoop {
     readonly scratch: VolatileScratch;
     readonly stats: SessionStats;
     readonly repair: ToolCallRepair;
-    /** Hard iteration cap per turn — prevents runaway tool-call loops from
-     *  burning unlimited API budget. The model gets one final force-summary
-     *  call when the cap fires. Override via REASONIX_MAX_ITER env var. */
-    static readonly DEFAULT_MAX_ITER_PER_TURN = 50;
     /** Files the model has read this session; gates edit_file / multi_edit so SEARCH text matches on-disk bytes. Cleared on fold / mechanical truncate (the model's byte-level view of the elided history is gone). In-memory only — naturally empty on resume. */
     readonly readTracker: ReadTracker;
     model: string;
     stream: boolean;
     reasoningEffort: ReasoningEffort;
-    maxOutputTokens: number | undefined;
     budgetUsd: number | null;
-    /** Maximum tool-call iterations per turn. Config > env > default (50). */
-    maxIterPerTurn: number;
     /** One-shot 80% warning latch — cleared by setBudget so a bump re-arms at the new boundary. */
     private _budgetWarned;
     sessionName: string | null;
@@ -1319,8 +1190,6 @@ declare class CacheFirstLoop {
     /** Stable per-call id used as the inflight key AND threaded into tool_start / tool events so the UI matches them up. */
     private inflightIdFor;
     private _inflightCounter;
-    private _healedCache;
-    private _healedVersion;
     private buildMessages;
     private healActiveLogBeforeSend;
     abort(opts?: LoopAbortOptions): void;
@@ -1568,61 +1437,6 @@ declare function applyMemoryStack(basePrompt: string, rootDir: string, opts?: {
     cfg?: ReasonixConfig;
 }): string;
 
-/** Read/write preserves the file's original encoding so edit_file on GB18030 (CN Windows) or UTF-8-BOM files doesn't silently convert or fail SEARCH on mangled decode (issue #1445). */
-type FileEncoding = "utf8" | "utf8-bom" | "gb18030";
-
-/** SEARCH must match byte-for-byte; empty SEARCH = create new file. No fuzzy match — silent wrong edit beats a missing one. */
-
-interface EditBlock {
-    /** Path as written by the model — relative to rootDir, or absolute. */
-    path: string;
-    /** Literal text to match in the target file. Empty → create new file. */
-    search: string;
-    /** Replacement text to write in place of `search`. */
-    replace: string;
-    /** Char offset in the source message where this block started. */
-    offset: number;
-}
-type ApplyStatus = 
-/** Edit landed on disk. */
-"applied"
-/** New file created (SEARCH was empty and file didn't exist). */
- | "created"
-/** File exists but SEARCH block wasn't found in its content. */
- | "not-found"
-/** File doesn't exist and SEARCH was non-empty (can't create without content). */
- | "file-missing"
-/** Path escapes rootDir — refused on safety grounds. */
- | "path-escape"
-/** fs write / read threw. */
- | "error";
-interface ApplyResult {
-    path: string;
-    status: ApplyStatus;
-    /** Extra detail (e.g. error message) for logs. */
-    message?: string;
-}
-declare function parseEditBlocks(text: string): EditBlock[];
-declare function applyEditBlock(block: EditBlock, rootDir: string): ApplyResult;
-declare function applyEditBlocks(blocks: EditBlock[], rootDir: string): ApplyResult[];
-interface EditSnapshot {
-    /** Path relative to rootDir, as the block named it. */
-    path: string;
-    /** `null` = file didn't exist; restore means delete. */
-    prevContent: string | null;
-    /** Encoding the file used before the edit. Required to round-trip GB18030 / UTF-8-BOM on restore. */
-    prevEncoding?: FileEncoding;
-}
-/** De-duped by path — one "before" snapshot per file even with multiple blocks. */
-declare function snapshotBeforeEdits(blocks: EditBlock[], rootDir: string): EditSnapshot[];
-declare function restoreSnapshots(snapshots: EditSnapshot[], rootDir: string): ApplyResult[];
-
-interface AutoGitRollbackOptions {
-    homeDir?: string;
-    cfg?: ReasonixConfig;
-}
-type AutoGitRollbackConfig = false | AutoGitRollbackOptions;
-
 /** Native FS tools — sandbox enforced here, not delegated. `edit_file` takes a single SEARCH/REPLACE string. */
 
 interface FilesystemToolsOptions {
@@ -1634,8 +1448,6 @@ interface FilesystemToolsOptions {
     outlineThresholdBytes?: number;
     /** Cap on total bytes from listing/grep tools — bounds tree-as-one-string accidents. */
     maxListBytes?: number;
-    /** Opt-in host guard for high-priority auto-git-rollback memories. */
-    autoGitRollback?: AutoGitRollbackConfig;
 }
 declare function registerFilesystemTools(registry: ToolRegistry, opts: FilesystemToolsOptions): ToolRegistry;
 
@@ -2042,8 +1854,8 @@ interface WebSearchOptions {
     signal?: AbortSignal;
     /** Config path for provider-specific keys. Defaults to ~/.reasonix/config.json. */
     configPath?: string;
-    /** Backend engine: "bing" (scrapes cn.bing.com HTML — default, works from CN without proxy), "bing-intl" (www.bing.com, indexes international sites), "searxng" (self-hosted SearXNG), "metaso" (Metaso API), "baidu" (Baidu AI Search API), "tavily" (LLM-friendly JSON API), "perplexity" (Perplexity AI), "exa" (Exa API), "brave" (Brave Search API), or "ollama" (Ollama cloud web search). */
-    engine?: "bing" | "bing-intl" | "searxng" | "metaso" | "baidu" | "tavily" | "perplexity" | "exa" | "brave" | "ollama";
+    /** Backend engine: "bing" (scrapes cn.bing.com HTML — default, works from CN without proxy), "searxng" (self-hosted SearXNG), "metaso" (Metaso API), "tavily" (LLM-friendly JSON API), "perplexity" (Perplexity AI), "exa" (Exa API), "brave" (Brave Search API), or "ollama" (Ollama cloud web search). */
+    engine?: "bing" | "searxng" | "metaso" | "tavily" | "perplexity" | "exa" | "brave" | "ollama";
     /** Base URL for SearXNG. Default http://localhost:8080. */
     endpoint?: string;
 }
@@ -2094,13 +1906,8 @@ interface SessionMeta {
     totalCompletionTokens?: number;
     /** Last turn's promptTokens — lets /status render the context bar before the next turn fires. */
     lastPromptTokens?: number;
-    /** Recent per-turn cache evidence. Backward-compatible: absent on sessions created before cache diagnostics. */
-    cacheDiagnostics?: CacheDiagnosticEntry[];
     /** True when the session filename/summary was generated from conversation content. */
     autoTitleGenerated?: boolean;
-    /** SHA-256[:16] of the system prompt active when the session was last used.
-     *  Compared on resume to warn the user if REASONIX.md or memory changed (#2212). */
-    systemFingerprint?: string;
     /** Source app when the session was imported from another local AI client. */
     importedSource?: "claude" | "codex";
     /** Absolute path of the source transcript used for import. */
@@ -2142,8 +1949,6 @@ interface TranscriptRecord {
     model?: string;
     /** Lets diff attribute cache-hit delta to log stability vs prompt change. */
     prefixHash?: string;
-    /** Optional local cache-diagnostic evidence. DeepSeek reports tokens; Reasonix infers miss reasons from prefix hashes. */
-    cacheDiagnostic?: CacheDiagnosticEntry;
     /** Optional error message (role === "error"). */
     error?: string;
     /** Structured error detail (role === "error"). */
@@ -2682,6 +2487,55 @@ type SectionResult<T> = {
 /** Caller owns initialize() / close() — keeps this pure so tests can feed a FakeMcpTransport. */
 declare function inspectMcpServer(client: McpClient): Promise<InspectionReport>;
 
+/** Read/write preserves the file's original encoding so edit_file on GB18030 (CN Windows) or UTF-8-BOM files doesn't silently convert or fail SEARCH on mangled decode (issue #1445). */
+type FileEncoding = "utf8" | "utf8-bom" | "gb18030";
+
+/** SEARCH must match byte-for-byte; empty SEARCH = create new file. No fuzzy match — silent wrong edit beats a missing one. */
+
+interface EditBlock {
+    /** Path as written by the model — relative to rootDir, or absolute. */
+    path: string;
+    /** Literal text to match in the target file. Empty → create new file. */
+    search: string;
+    /** Replacement text to write in place of `search`. */
+    replace: string;
+    /** Char offset in the source message where this block started. */
+    offset: number;
+}
+type ApplyStatus = 
+/** Edit landed on disk. */
+"applied"
+/** New file created (SEARCH was empty and file didn't exist). */
+ | "created"
+/** File exists but SEARCH block wasn't found in its content. */
+ | "not-found"
+/** File doesn't exist and SEARCH was non-empty (can't create without content). */
+ | "file-missing"
+/** Path escapes rootDir — refused on safety grounds. */
+ | "path-escape"
+/** fs write / read threw. */
+ | "error";
+interface ApplyResult {
+    path: string;
+    status: ApplyStatus;
+    /** Extra detail (e.g. error message) for logs. */
+    message?: string;
+}
+declare function parseEditBlocks(text: string): EditBlock[];
+declare function applyEditBlock(block: EditBlock, rootDir: string): ApplyResult;
+declare function applyEditBlocks(blocks: EditBlock[], rootDir: string): ApplyResult[];
+interface EditSnapshot {
+    /** Path relative to rootDir, as the block named it. */
+    path: string;
+    /** `null` = file didn't exist; restore means delete. */
+    prevContent: string | null;
+    /** Encoding the file used before the edit. Required to round-trip GB18030 / UTF-8-BOM on restore. */
+    prevEncoding?: FileEncoding;
+}
+/** De-duped by path — one "before" snapshot per file even with multiple blocks. */
+declare function snapshotBeforeEdits(blocks: EditBlock[], rootDir: string): EditSnapshot[];
+declare function restoreSnapshots(snapshots: EditSnapshot[], rootDir: string): ApplyResult[];
+
 /** Backward-compat — public-API const, frozen at the historical flash phrasing. Internal callers use codeSystemPrompt(rootDir, { modelId }) so the contract names the real tier (#582). */
 declare const CODE_SYSTEM_PROMPT: string;
 interface CodeSystemPromptOptions {
@@ -2847,4 +2701,4 @@ declare function aggregateUsage(records: UsageRecord[], opts?: AggregateOptions)
 /** File-size helper for the stats header — "1.2 MB" etc. Returns "" if missing. */
 declare function formatLogSize(path?: string): string;
 
-export { AT_MENTION_PATTERN, AT_PICKER_PREFIX, type AggregateOptions, AppendOnlyLog, type AppendUsageInput, type ApplyResult, type ApplyStatus, type AtMentionExpansion, type AtMentionOptions, type BridgeOptions, type BridgeResult, CODE_SYSTEM_PROMPT, CacheFirstLoop, type CacheFirstLoopOptions, type CallToolResult, type ChatMessage, type ChatResponse, type ChoiceOption, ChoiceRequestedError, type ChoiceToolOptions, type CodeSystemPromptOptions, DEFAULT_AT_DIR_MAX_ENTRIES, DEFAULT_AT_MENTION_MAX_BYTES, DEFAULT_MAX_RESULT_CHARS, DEFAULT_MAX_RESULT_TOKENS, DEFAULT_PICKER_IGNORE_DIRS, DEFAULT_SPAWN_STORM_THRESHOLD, DeepSeekClient, type DeepSeekClientOptions, type RenderOptions as DiffRenderOptions, type DiffReport, type DiffSide, type DirEntry, type EditBlock, type EditSnapshot, type EventRole, type FileWithStats, type FilesystemToolsOptions, type FlattenDecision, type FlattenOptions, type GetLatestVersionOptions, type GetPromptResult, HOOK_EVENTS, HOOK_SETTINGS_DIRNAME, HOOK_SETTINGS_FILENAME, type HookConfig, type HookEvent, type HookOutcome, type HookPayload, type HookReport, type HookScope, type HookSettings, type HookSpawnInput, type HookSpawnResult, type HookSpawner, ImmutablePrefix, type ImmutablePrefixOptions, type InitializeResult, type InspectionReport, type InstallSource, type JSONSchema, type JsonRpcMessage, type JsonRpcRequest, type JsonRpcResponse, LATEST_CACHE_TTL_MS, LATEST_FETCH_TIMEOUT_MS, type ListDirectoryOptions, type ListFilesOptions, type ListPromptsResult, type ListResourcesResult, type ListToolsResult, type LoadHookSettingsOptions, type LoopAbortOptions, type LoopEvent, MCP_PROTOCOL_VERSION, MEMORY_INDEX_FILE, MEMORY_INDEX_MAX_CHARS, McpClient, type McpClientOptions, type McpContentBlock, type McpProgressHandler, type McpProgressInfo, type McpPrompt, type McpPromptArgument, type McpPromptMessage, type McpPromptResourceBlock, type McpResource, type McpResourceContents, type McpResourceContentsBlob, type McpResourceContentsText, type McpSpec, type McpTool, type McpToolSchema, type McpTransport, type MemoryEntry, type MemoryScope, MemoryStore, type MemoryStoreOptions, type MemoryToolsOptions, type MemoryType, type WriteInput as MemoryWriteInput, NeedsConfirmationError, PROJECT_MEMORY_FILE, PROJECT_MEMORY_FILES, PROJECT_MEMORY_MAX_CHARS, type PageContent, type ParsedAtQuery, type PickerCandidate, PlanProposedError, PlanRevisionProposedError, type PlanStep, type PlanStepRisk, type PlanToolOptions, type ProgressNotificationParams, type ProjectMemory, type RankPickerOptions, type ReadResourceResult, type ReadTranscriptResult, type ReasonixConfig, type ReconfigurableOptions, type RepairReport, type ReplayStats, type ResolvedHook, type RetryInfo, type RetryOptions, type Role, type RunCommandResult, type RunHooksOptions, type ScavengeOptions, type ScavengeResult, type SearchResult, type SectionResult, type SessionInfo, SessionStats, type SessionSummary, type ShellToolsOptions, type SpawnDistillation, type SseMcpSpec, SseTransport, type SseTransportOptions, type StdioMcpSpec, StdioTransport, type StdioTransportOptions, type StepCompletion, StormBreaker, type StreamChunk, type StreamWalkOptions, type StreamableHttpMcpSpec, StreamableHttpTransport, type StreamableHttpTransportOptions, type SubagentEvent, type SubagentResult, type SubagentResultLike, type SubagentSessionSummary, type SubagentSink, SubagentTelemetry, type SubagentToolOptions, type TodoItem, type TodoStatus, type TodoToolOptions, type ToolCall, type ToolCallContext, ToolCallRepair, type ToolCallRepairOptions, type ToolDefinition, type ToolFunctionSpec, ToolRegistry, type ToolSpec, type TranscriptMeta, type TranscriptRecord, type TruncationRepairResult, type TurnPair, type TurnStats, USER_MEMORY_DIR, Usage, type UsageAggregate, type UsageBucket, type UsageRecord, VERSION, VolatileScratch, type WebFetchOptions, type WebSearchOptions, type WebToolsOptions, aggregateUsage, analyzeSchema, appendSessionMessage, appendUsage, applyEditBlock, applyEditBlocks, applyMemoryStack, applyProjectMemory, applyUserMemory, bridgeMcpTools, bucketCacheHitRatio, bucketSavingsFraction, claudeEquivalentCost, codeSystemPrompt, compareVersions, computeReplayStats, computeSpawnDistillation, costUsd, countSpawnStorms, decideOutcome, defaultConfigPath, defaultUsageLogPath, deleteSession, detectAtPicker, detectInstallSource, detectNpmInstallPrefix, detectShellOperator, diffTranscripts, expandAtMentions, fetchWithRetry, findProjectMemoryPath, fixToolCallPairing, flattenMcpResult, flattenSchema, forkRegistryExcluding, formatCommandResult, formatHookOutcomeMessage, formatLogSize, formatLoopError, formatSearchResults, getLatestVersion, globalSettingsPath, healLoadedMessages, healLoadedMessagesByTokens, htmlToText, injectPowerShellUtf8, inputCostUsd, inspectMcpServer, isAllowed, isJsonRpcError, isNpxInstall, isPlausibleKey, listDirectory, listFilesSync, listFilesWithStatsAsync, listFilesWithStatsSync, listSessions, loadApiKey, loadBaiduApiKey, loadBaseUrl, loadBraveApiKey, loadDotenv, loadExaApiKey, loadHooks, loadMetasoApiKey, loadOllamaApiKey, loadPerplexityApiKey, loadSessionMessages, matchesTool, memoryEnabled, nestArguments, openTranscriptFile, outputCostUsd, parseAtQuery, parseBingResults, parseEditBlocks, parseMcpSpec, parseSearxngHtmlResults, parseTranscript, prepareSpawn, projectHash, projectSettingsPath, quoteForCmdExe, rankPickerCandidates, readConfig, readProjectMemory, readTranscript, readUsageLog, recordFromLoopEvent, redactKey, registerChoiceTool, registerFilesystemTools, registerMemoryTools, registerPlanTool, registerShellTools, registerSubagentTool, registerTodoTool, registerWebTools, renderMarkdown as renderDiffMarkdown, renderSummaryTable as renderDiffSummary, repairTruncatedJson, replayFromFile, resolveExecutable, resolveProjectMemoryWritePath, restoreSnapshots, runCommand, runHooks, sanitizeMemoryName, sanitizeName as sanitizeSessionName, saveApiKey, saveBaseUrl, scavengeToolCalls, sessionPath, sessionsDir, similarity, snapshotBeforeEdits, stripHallucinatedToolMarkup, summarizeSubagentSession, tokenizeCommand, truncateForModel, truncateForModelByTokens, walkFilesStream, webFetch, webSearch, withUtf8Codepage, writeConfig, writeMeta, writeRecord };
+export { AT_MENTION_PATTERN, AT_PICKER_PREFIX, type AggregateOptions, AppendOnlyLog, type AppendUsageInput, type ApplyResult, type ApplyStatus, type AtMentionExpansion, type AtMentionOptions, type BridgeOptions, type BridgeResult, CODE_SYSTEM_PROMPT, CacheFirstLoop, type CacheFirstLoopOptions, type CallToolResult, type ChatMessage, type ChatResponse, type ChoiceOption, ChoiceRequestedError, type ChoiceToolOptions, type CodeSystemPromptOptions, DEFAULT_AT_DIR_MAX_ENTRIES, DEFAULT_AT_MENTION_MAX_BYTES, DEFAULT_MAX_RESULT_CHARS, DEFAULT_MAX_RESULT_TOKENS, DEFAULT_PICKER_IGNORE_DIRS, DEFAULT_SPAWN_STORM_THRESHOLD, DeepSeekClient, type DeepSeekClientOptions, type RenderOptions as DiffRenderOptions, type DiffReport, type DiffSide, type DirEntry, type EditBlock, type EditSnapshot, type EventRole, type FileWithStats, type FilesystemToolsOptions, type FlattenDecision, type FlattenOptions, type GetLatestVersionOptions, type GetPromptResult, HOOK_EVENTS, HOOK_SETTINGS_DIRNAME, HOOK_SETTINGS_FILENAME, type HookConfig, type HookEvent, type HookOutcome, type HookPayload, type HookReport, type HookScope, type HookSettings, type HookSpawnInput, type HookSpawnResult, type HookSpawner, ImmutablePrefix, type ImmutablePrefixOptions, type InitializeResult, type InspectionReport, type InstallSource, type JSONSchema, type JsonRpcMessage, type JsonRpcRequest, type JsonRpcResponse, LATEST_CACHE_TTL_MS, LATEST_FETCH_TIMEOUT_MS, type ListDirectoryOptions, type ListFilesOptions, type ListPromptsResult, type ListResourcesResult, type ListToolsResult, type LoadHookSettingsOptions, type LoopAbortOptions, type LoopEvent, MCP_PROTOCOL_VERSION, MEMORY_INDEX_FILE, MEMORY_INDEX_MAX_CHARS, McpClient, type McpClientOptions, type McpContentBlock, type McpProgressHandler, type McpProgressInfo, type McpPrompt, type McpPromptArgument, type McpPromptMessage, type McpPromptResourceBlock, type McpResource, type McpResourceContents, type McpResourceContentsBlob, type McpResourceContentsText, type McpSpec, type McpTool, type McpToolSchema, type McpTransport, type MemoryEntry, type MemoryScope, MemoryStore, type MemoryStoreOptions, type MemoryToolsOptions, type MemoryType, type WriteInput as MemoryWriteInput, NeedsConfirmationError, PROJECT_MEMORY_FILE, PROJECT_MEMORY_FILES, PROJECT_MEMORY_MAX_CHARS, type PageContent, type ParsedAtQuery, type PickerCandidate, PlanProposedError, PlanRevisionProposedError, type PlanStep, type PlanStepRisk, type PlanToolOptions, type ProgressNotificationParams, type ProjectMemory, type RankPickerOptions, type ReadResourceResult, type ReadTranscriptResult, type ReasonixConfig, type ReconfigurableOptions, type RepairReport, type ReplayStats, type ResolvedHook, type RetryInfo, type RetryOptions, type Role, type RunCommandResult, type RunHooksOptions, type ScavengeOptions, type ScavengeResult, type SearchResult, type SectionResult, type SessionInfo, SessionStats, type SessionSummary, type ShellToolsOptions, type SpawnDistillation, type SseMcpSpec, SseTransport, type SseTransportOptions, type StdioMcpSpec, StdioTransport, type StdioTransportOptions, type StepCompletion, StormBreaker, type StreamChunk, type StreamWalkOptions, type StreamableHttpMcpSpec, StreamableHttpTransport, type StreamableHttpTransportOptions, type SubagentEvent, type SubagentResult, type SubagentResultLike, type SubagentSessionSummary, type SubagentSink, SubagentTelemetry, type SubagentToolOptions, type TodoItem, type TodoStatus, type TodoToolOptions, type ToolCall, type ToolCallContext, ToolCallRepair, type ToolCallRepairOptions, type ToolDefinition, type ToolFunctionSpec, ToolRegistry, type ToolSpec, type TranscriptMeta, type TranscriptRecord, type TruncationRepairResult, type TurnPair, type TurnStats, USER_MEMORY_DIR, Usage, type UsageAggregate, type UsageBucket, type UsageRecord, VERSION, VolatileScratch, type WebFetchOptions, type WebSearchOptions, type WebToolsOptions, aggregateUsage, analyzeSchema, appendSessionMessage, appendUsage, applyEditBlock, applyEditBlocks, applyMemoryStack, applyProjectMemory, applyUserMemory, bridgeMcpTools, bucketCacheHitRatio, bucketSavingsFraction, claudeEquivalentCost, codeSystemPrompt, compareVersions, computeReplayStats, computeSpawnDistillation, costUsd, countSpawnStorms, decideOutcome, defaultConfigPath, defaultUsageLogPath, deleteSession, detectAtPicker, detectInstallSource, detectNpmInstallPrefix, detectShellOperator, diffTranscripts, expandAtMentions, fetchWithRetry, findProjectMemoryPath, fixToolCallPairing, flattenMcpResult, flattenSchema, forkRegistryExcluding, formatCommandResult, formatHookOutcomeMessage, formatLogSize, formatLoopError, formatSearchResults, getLatestVersion, globalSettingsPath, healLoadedMessages, healLoadedMessagesByTokens, htmlToText, injectPowerShellUtf8, inputCostUsd, inspectMcpServer, isAllowed, isJsonRpcError, isNpxInstall, isPlausibleKey, listDirectory, listFilesSync, listFilesWithStatsAsync, listFilesWithStatsSync, listSessions, loadApiKey, loadBaseUrl, loadBraveApiKey, loadDotenv, loadExaApiKey, loadHooks, loadMetasoApiKey, loadOllamaApiKey, loadPerplexityApiKey, loadSessionMessages, matchesTool, memoryEnabled, nestArguments, openTranscriptFile, outputCostUsd, parseAtQuery, parseBingResults, parseEditBlocks, parseMcpSpec, parseSearxngHtmlResults, parseTranscript, prepareSpawn, projectHash, projectSettingsPath, quoteForCmdExe, rankPickerCandidates, readConfig, readProjectMemory, readTranscript, readUsageLog, recordFromLoopEvent, redactKey, registerChoiceTool, registerFilesystemTools, registerMemoryTools, registerPlanTool, registerShellTools, registerSubagentTool, registerTodoTool, registerWebTools, renderMarkdown as renderDiffMarkdown, renderSummaryTable as renderDiffSummary, repairTruncatedJson, replayFromFile, resolveExecutable, resolveProjectMemoryWritePath, restoreSnapshots, runCommand, runHooks, sanitizeMemoryName, sanitizeName as sanitizeSessionName, saveApiKey, saveBaseUrl, scavengeToolCalls, sessionPath, sessionsDir, similarity, snapshotBeforeEdits, stripHallucinatedToolMarkup, summarizeSubagentSession, tokenizeCommand, truncateForModel, truncateForModelByTokens, walkFilesStream, webFetch, webSearch, withUtf8Codepage, writeConfig, writeMeta, writeRecord };

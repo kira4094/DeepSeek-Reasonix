@@ -5,50 +5,48 @@ import {
   startCpuProfile,
   stopAndSaveCpuProfile
 } from "./chunk-ZZM6QJ4W.js";
-import "./chunk-4XMNMGWP.js";
-import "./chunk-7WLGY72J.js";
+import "./chunk-BLRVVIQ2.js";
 import "./chunk-TEUGA73O.js";
-import "./chunk-IJC3BWW2.js";
-import "./chunk-75N64M56.js";
-import "./chunk-GDWPGJNM.js";
-import "./chunk-5CUZ3JDP.js";
+import "./chunk-J26XOB2T.js";
+import "./chunk-R7JMQMLD.js";
+import "./chunk-4V4TKQMB.js";
+import "./chunk-FK7NXDRP.js";
+import "./chunk-V4AXMN4X.js";
+import "./chunk-XHP6NYOT.js";
 import {
   applyMemoryStack,
   escalationContract
-} from "./chunk-5WOT6JCF.js";
-import "./chunk-L3VPEESB.js";
+} from "./chunk-J4MYMBJ7.js";
 import {
   installProxyIfConfigured
-} from "./chunk-Z3IHAJSA.js";
-import "./chunk-ZL3BCUZY.js";
-import "./chunk-T47NAKZP.js";
+} from "./chunk-YMYX6QTC.js";
+import "./chunk-BOWSNGQC.js";
+import "./chunk-QSKDP3OS.js";
 import "./chunk-25T6CVUP.js";
-import "./chunk-AYVL2YX5.js";
+import "./chunk-76VUZIWH.js";
 import "./chunk-6UNHNVJR.js";
 import {
   listSessions
-} from "./chunk-O5EHJ5L2.js";
-import "./chunk-O5RECP35.js";
+} from "./chunk-P5SUHDUQ.js";
 import {
   VERSION
 } from "./chunk-6CLGRUYN.js";
 import "./chunk-2UQP6H6T.js";
 import {
   t
-} from "./chunk-4ETZ2I36.js";
+} from "./chunk-U7G72DHQ.js";
 import {
   DEFAULT_MODEL,
   ensureDashboardToken,
   isReasoningEffort,
   loadDashboardEnabled,
-  loadModel,
   loadProxyConfig,
   loadReasoningEffort,
   normalizeMcpConfig,
   readConfig,
   saveReasoningEffort,
   specToRaw
-} from "./chunk-MY7XESPF.js";
+} from "./chunk-GCNBIWK7.js";
 import {
   __commonJS,
   __require,
@@ -3204,7 +3202,7 @@ function loadDotMcpJson(projectRoot) {
 // src/cli/resolve.ts
 function resolveDefaults(flags) {
   const cfg = flags.noConfig ? {} : readConfig();
-  const model = flags.model?.trim() || (flags.noConfig ? cfg.model?.trim() : loadModel()) || DEFAULT_MODEL;
+  const model = flags.model?.trim() || cfg.model?.trim() || DEFAULT_MODEL;
   const flagEffort = flags.effort?.toLowerCase();
   const reasoningEffort = isReasoningEffort(flagEffort) ? flagEffort : flags.noConfig ? "high" : loadReasoningEffort();
   const merged = flags.noConfig ? cfg : mergeDotMcpJson(cfg, process.cwd());
@@ -3213,21 +3211,19 @@ function resolveDefaults(flags) {
     flags.mcp && flags.mcp.length > 0 ? flags.mcp : void 0
   );
   const mcp2 = normalizedMcp.map(specToRaw);
-  const session = resolveSession(flags.session, cfg.session, cfg.autoResumeSession);
-  const forceNew = cfg.autoResumeSession === false && flags.session === void 0 ? true : void 0;
-  return { model, reasoningEffort, mcp: mcp2, session, forceNew };
+  const session = resolveSession(flags.session, cfg.session);
+  return { model, reasoningEffort, mcp: mcp2, session };
 }
 function mergeDotMcpJson(cfg, projectRoot) {
   const project = loadDotMcpJson(projectRoot);
   if (!project) return cfg;
   return { ...cfg, mcpServers: { ...cfg.mcpServers ?? {}, ...project } };
 }
-function resolveSession(flag, configSession, autoResume) {
+function resolveSession(flag, configSession) {
   if (flag === false) return void 0;
   if (typeof flag === "string" && flag.length > 0) return flag;
   if (configSession === null) return void 0;
   if (typeof configSession === "string" && configSession.length > 0) return configSession;
-  if (autoResume === false) return void 0;
   return "default";
 }
 function resolveContinueFlag(flag, fallbackSession, getLatestSession, warn = () => {
@@ -3349,11 +3345,11 @@ program2.action(async (opts) => {
   const cfg = readConfig();
   const mode = resolveBareCommandMode(cfg);
   if (mode === "setup") {
-    const { setupCommand } = await import("./setup-Y7BI2XCJ.js");
+    const { setupCommand } = await import("./setup-HE3F6U2F.js");
     await setupCommand({ forceKeyStep: true });
     return;
   }
-  const { codeCommand } = await import("./code-IZSDESEF.js");
+  const { codeCommand } = await import("./code-74MDHBCB.js");
   await codeCommand({
     dir: process.cwd(),
     forceResume: !!opts.continue,
@@ -3361,44 +3357,20 @@ program2.action(async (opts) => {
   });
 });
 program2.command("setup").description(t("cli.setup")).action(async () => {
-  const { setupCommand } = await import("./setup-Y7BI2XCJ.js");
+  const { setupCommand } = await import("./setup-HE3F6U2F.js");
   await setupCommand({ forceKeyStep: true });
 });
 program2.command("code [dir]").description(t("cli.code")).option("-m, --model <id>", t("ui.modelOverride")).option("--effort <level>", t("ui.effortHintShort")).option("--no-session", t("ui.noSession")).option("--no-mouse", t("ui.noMouseHint")).option("--no-proxy", t("ui.noProxyHint")).option("-r, --resume", t("ui.resumeHint")).option("-n, --new", t("ui.newHint")).option("--transcript <path>", t("ui.transcriptHint")).option("--budget <usd>", t("ui.budgetHint"), (v) => Number.parseFloat(v)).option("--no-dashboard", t("ui.noDashboard")).option("--open-dashboard", t("ui.openDashboardHint")).option("--dashboard-port <port>", t("ui.dashboardPortHint")).option(
   "--dashboard-host <host>",
   "bind address for the dashboard (default 127.0.0.1; use 0.0.0.0 for LAN access \u2014 the URL token is then the only auth)"
 ).option("--system-append <prompt>", t("ui.systemAppendHint")).option("--system-append-file <path>", t("ui.systemAppendFileHint")).option(
-  "--dry-run",
-  "for ssh:// targets: parse the URI, check local SSH, print planned steps (no remote commands execute). RFC for #2140."
-).option(
   "--profile [path]",
   "record a V8 CPU profile; saved on exit. Send the .cpuprofile back if you're reporting a perf bug."
 ).action(async (dir, opts) => {
-  if (typeof dir === "string" && dir.startsWith("ssh://") && !opts.dryRun) {
-    process.stderr.write(
-      "ssh:// remote workspaces require --dry-run (RFC #2140).\nFull remote execution is not yet implemented.\n\nShort-term recommendation:\n  Run Reasonix directly on the remote host, then use SSH tunnel for the dashboard:\n  $ ssh -L 8420:127.0.0.1:8420 user@host\n  $ reasonix code\n"
-    );
-    process.exit(1);
-  }
-  if (typeof dir === "string" && dir.startsWith("ssh://") && opts.dryRun) {
-    const { generateSshDryRunReport, parseSshUri, probeSsh } = await import("./ssh-remote-NVS37P3V.js");
-    const uri = parseSshUri(dir);
-    if (!uri) {
-      process.stderr.write(`invalid ssh:// URI: ${dir}
-`);
-      process.stderr.write("expected format: ssh://[user@]host[:port][/path]\n");
-      process.exit(1);
-    }
-    const ssh = probeSsh();
-    const report = generateSshDryRunReport(uri, ssh);
-    console.log(report);
-    if (!ssh) process.exit(1);
-    return;
-  }
   persistEffortFlag(opts.effort);
   const profiling = await maybeStartCpuProfile(opts.profile);
   try {
-    const { codeCommand } = await import("./code-IZSDESEF.js");
+    const { codeCommand } = await import("./code-74MDHBCB.js");
     await codeCommand({
       dir,
       model: opts.model,
@@ -3449,7 +3421,7 @@ program2.command("chat").description(t("cli.chat")).option("-m, --model <id>", t
       (msg) => process.stderr.write(`${msg}
 `)
     );
-    const { chatCommand } = await import("./chat-ZVXCAW5V.js");
+    const { chatCommand } = await import("./chat-LMI25FQV.js");
     const chatBase = opts.system ?? defaultSystemPrompt(defaults.model);
     const chatCwd = process.cwd();
     const chatRebuildSystem = () => applyMemoryStack(chatBase, chatCwd);
@@ -3464,7 +3436,7 @@ program2.command("chat").description(t("cli.chat")).option("-m, --model <id>", t
       mcp: defaults.mcp,
       mcpPrefix: opts.mcpPrefix,
       forceResume: continueOpts.forceResume,
-      forceNew: !!opts.new || !!defaults.forceNew,
+      forceNew: !!opts.new,
       noDashboard: opts.dashboard === false || !loadDashboardEnabled(opts.config === false),
       openDashboard: opts.openDashboard === true,
       dashboardPort: resolveDashboardPort(
@@ -3492,7 +3464,7 @@ program2.command("run <task>").description(t("cli.run")).option("-m, --model <id
     effort: opts.effort,
     noConfig: opts.config === false
   });
-  const { runCommand } = await import("./run-RT3TKR3K.js");
+  const { runCommand } = await import("./run-IKZQTI7R.js");
   await runCommand({
     task,
     model: defaults.model,
@@ -3516,7 +3488,7 @@ program2.command("acp").description("run reasonix as an Agent Client Protocol (A
     effort: opts.effort,
     noConfig: false
   });
-  const { acpCommand } = await import("./acp-UWXGK4SU.js");
+  const { acpCommand } = await import("./acp-QYN6TT26.js");
   await acpCommand({
     model: defaults.model,
     budgetUsd: parseBudgetFlag(opts.budget),
@@ -3535,7 +3507,7 @@ program2.command("desktop").description("headless JSON-RPC chat for the desktop 
     effort: opts.effort,
     noConfig: false
   });
-  const { desktopCommand } = await import("./desktop-O65TWSLB.js");
+  const { desktopCommand } = await import("./desktop-GMYRVPMP.js");
   await desktopCommand({
     model: defaults.model,
     budgetUsd: parseBudgetFlag(opts.budget),
@@ -3543,31 +3515,27 @@ program2.command("desktop").description("headless JSON-RPC chat for the desktop 
   });
 });
 program2.command("stats [transcript]").description(t("cli.stats")).action(async (transcript) => {
-  const { statsCommand } = await import("./stats-LVHX43BD.js");
+  const { statsCommand } = await import("./stats-GKG5JZQX.js");
   statsCommand({ transcript });
 });
-program2.command("doctor").description(t("cli.doctor")).option("--json", t("ui.jsonHint")).option("--cache", "run cache-stability checks only").action(async (opts) => {
-  const { doctorCommand } = await import("./doctor-J6RX6AZ2.js");
-  await doctorCommand({ json: !!opts.json, cache: !!opts.cache });
-});
-program2.command("doctor-cache").description("cache-stability health check").option("--json", t("ui.jsonHint")).action(async (opts) => {
-  const { doctorCommand } = await import("./doctor-J6RX6AZ2.js");
-  await doctorCommand({ json: !!opts.json, cache: true });
+program2.command("doctor").description(t("cli.doctor")).option("--json", t("ui.jsonHint")).action(async (opts) => {
+  const { doctorCommand } = await import("./doctor-WAPJZQZI.js");
+  await doctorCommand({ json: !!opts.json });
 });
 program2.command("commit").description(t("cli.commit")).option("-m, --model <id>", t("ui.modelOverrideFlash")).option("-y, --yes", t("ui.skipConfirmHint")).action(async (opts) => {
-  const { commitCommand } = await import("./commit-CICPTK4O.js");
+  const { commitCommand } = await import("./commit-JT7LYBTL.js");
   await commitCommand({ model: opts.model, yes: !!opts.yes });
 });
 program2.command("sessions [name]").description(t("cli.sessions")).option("-v, --verbose", t("ui.verboseHint")).action(async (name, opts) => {
-  const { sessionsCommand } = await import("./sessions-RDUKUFUH.js");
+  const { sessionsCommand } = await import("./sessions-LJCPRG7L.js");
   sessionsCommand({ name, verbose: !!opts.verbose });
 });
 program2.command("prune-sessions").description(t("cli.pruneSessions")).option("--days <n>", t("ui.pruneDaysHint"), (v) => Number.parseInt(v, 10)).option("--dry-run", t("ui.pruneDryRunHint")).action(async (opts) => {
-  const { pruneSessionsCommand } = await import("./prune-sessions-EXXCNWQ5.js");
+  const { pruneSessionsCommand } = await import("./prune-sessions-TE4BJYO2.js");
   pruneSessionsCommand({ days: opts.days, dryRun: !!opts.dryRun });
 });
 program2.command("events <name>").description(t("cli.events")).option("--type <type>", t("ui.eventTypeHint")).option("--since <id>", t("ui.eventSinceHint"), (v) => Number.parseInt(v, 10)).option("--tail <n>", t("ui.eventTailHint"), (v) => Number.parseInt(v, 10)).option("--json", t("ui.jsonHint")).option("--projection", t("ui.projectionHint")).action(async (name, opts) => {
-  const { eventsCommand } = await import("./events-LIEAFMWQ.js");
+  const { eventsCommand } = await import("./events-5IVFJ4H3.js");
   eventsCommand({
     name,
     type: opts.type,
@@ -3578,7 +3546,7 @@ program2.command("events <name>").description(t("cli.events")).option("--type <t
   });
 });
 program2.command("replay <transcript>").description(t("cli.replay")).option("--print", t("ui.printHint")).option("--head <n>", t("ui.headHint"), (v) => Number.parseInt(v, 10)).option("--tail <n>", t("ui.tailHint"), (v) => Number.parseInt(v, 10)).action(async (transcript, opts) => {
-  const { replayCommand } = await import("./replay-WX6X6BP5.js");
+  const { replayCommand } = await import("./replay-2GXFWL6O.js");
   await replayCommand({
     path: transcript,
     print: !!opts.print,
@@ -3587,7 +3555,7 @@ program2.command("replay <transcript>").description(t("cli.replay")).option("--p
   });
 });
 program2.command("diff <a> <b>").description(t("cli.diff")).option("--md <path>", t("ui.mdReportHint")).option("--print", t("ui.printHintTable")).option("--tui", t("ui.tuiHint")).option("--label-a <label>", t("ui.labelAHint")).option("--label-b <label>", t("ui.labelBHint")).action(async (a, b, opts) => {
-  const { diffCommand } = await import("./diff-OLD3DEZM.js");
+  const { diffCommand } = await import("./diff-LASK2CN5.js");
   await diffCommand({
     a,
     b,
@@ -3601,7 +3569,7 @@ program2.command("diff <a> <b>").description(t("cli.diff")).option("--md <path>"
 var mcp = program2.command("mcp").description(t("cli.mcp"));
 mcp.command("list").description(t("ui.mcpListDescription")).option("--json", t("ui.jsonHintCatalog")).option("--local", t("ui.mcpLocalHint")).option("--refresh", t("ui.mcpRefreshHint")).option("--limit <n>", t("ui.mcpLimitHint"), (v) => Number.parseInt(v, 10)).option("--pages <n>", t("ui.mcpPagesHint"), (v) => Number.parseInt(v, 10)).option("--all", t("ui.mcpAllHint")).action(async (opts) => {
   try {
-    const { mcpListCommand } = await import("./mcp-AX2CCK5C.js");
+    const { mcpListCommand } = await import("./mcp-ECGJACAP.js");
     await mcpListCommand({
       json: !!opts.json,
       local: !!opts.local,
@@ -3618,7 +3586,7 @@ mcp.command("list").description(t("ui.mcpListDescription")).option("--json", t("
 });
 mcp.command("search <query>").description(t("ui.mcpSearchDescription")).option("--json", t("ui.jsonHintCatalog")).option("--refresh", t("ui.mcpRefreshHint")).option("--limit <n>", t("ui.mcpLimitHint"), (v) => Number.parseInt(v, 10)).option("--max-pages <n>", t("ui.mcpMaxPagesHint"), (v) => Number.parseInt(v, 10)).action(async (query, opts) => {
   try {
-    const { mcpSearchCommand } = await import("./mcp-AX2CCK5C.js");
+    const { mcpSearchCommand } = await import("./mcp-ECGJACAP.js");
     await mcpSearchCommand(query, {
       json: !!opts.json,
       refresh: !!opts.refresh,
@@ -3633,7 +3601,7 @@ mcp.command("search <query>").description(t("ui.mcpSearchDescription")).option("
 });
 mcp.command("install <name>").description(t("ui.mcpInstallDescription")).option("--refresh", t("ui.mcpRefreshHint")).option("--max-pages <n>", t("ui.mcpMaxPagesHint"), (v) => Number.parseInt(v, 10)).action(async (name, opts) => {
   try {
-    const { mcpInstallCommand } = await import("./mcp-AX2CCK5C.js");
+    const { mcpInstallCommand } = await import("./mcp-ECGJACAP.js");
     await mcpInstallCommand(name, {
       refresh: !!opts.refresh,
       maxPages: typeof opts.maxPages === "number" && opts.maxPages > 0 ? opts.maxPages : void 0
@@ -3646,7 +3614,7 @@ mcp.command("install <name>").description(t("ui.mcpInstallDescription")).option(
 });
 mcp.command("browse").description(t("ui.mcpBrowseDescription")).action(async () => {
   try {
-    const { mcpBrowseCommand } = await import("./mcp-browse-VTKHKYWQ.js");
+    const { mcpBrowseCommand } = await import("./mcp-browse-ZFCM7PGS.js");
     await mcpBrowseCommand();
   } catch (err) {
     process.stderr.write(`mcp browse failed: ${err.message}
@@ -3655,7 +3623,7 @@ mcp.command("browse").description(t("ui.mcpBrowseDescription")).action(async () 
   }
 });
 mcp.command("inspect <spec>").description(t("ui.mcpInspectDescription")).option("--json", t("ui.jsonHintReport")).action(async (spec, opts) => {
-  const { formatMcpInspectFailure, mcpInspectCommand } = await import("./mcp-inspect-WCFN2YDV.js");
+  const { formatMcpInspectFailure, mcpInspectCommand } = await import("./mcp-inspect-ASEH5XEJ.js");
   try {
     await mcpInspectCommand({ spec, json: !!opts.json });
   } catch (err) {
@@ -3665,7 +3633,7 @@ mcp.command("inspect <spec>").description(t("ui.mcpInspectDescription")).option(
   }
 });
 program2.command("version").description(t("cli.version")).action(async () => {
-  const { versionCommand } = await import("./version-IBAVBJ6X.js");
+  const { versionCommand } = await import("./version-LNIRCYSR.js");
   versionCommand();
 });
 program2.command("update").description(t("cli.update")).option("--dry-run", t("ui.dryRunHint")).action(async (opts) => {
@@ -3674,7 +3642,7 @@ program2.command("update").description(t("cli.update")).option("--dry-run", t("u
 });
 program2.command("index").description(t("cli.index")).option("--rebuild", t("ui.rebuildHint")).option("--model <name>", t("ui.embedModelHint")).option("--dir <path>", t("ui.projectDirHint")).option("--ollama-url <url>", t("ui.ollamaUrlHint")).option("-y, --yes", t("ui.skipPromptsHint")).action(
   async (opts) => {
-    const { indexCommand } = await import("./commands-ZMFB7DPD.js");
+    const { indexCommand } = await import("./commands-IUL2CLKH.js");
     await indexCommand(opts);
   }
 );
